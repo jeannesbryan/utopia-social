@@ -59,17 +59,18 @@ $userAvatar = $_SESSION['ava_cache'][$userPk] !== null
         .btn-logout:hover { background: rgba(244,33,46,0.1); }
 
         /* MAIN CONTENT */
-        .main-container { flex: 1; max-width: 1000px; margin: 0 auto; padding: 40px 20px; width: 100%; }
+        .main-container { flex: 1; max-width: 1200px; margin: 0 auto; padding: 40px 20px; width: 100%; }
         .welcome-text { font-size: 32px; font-weight: 800; margin-bottom: 8px; }
         .subtitle-text { font-size: 16px; color: #71767b; margin-bottom: 40px; }
         
         /* GRID CARDS */
-        .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 24px; }
+        .apps-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 24px; }
         .app-card { background: #16181c; border: 1px solid #2f3336; border-radius: 16px; padding: 24px; transition: transform 0.2s, border-color 0.2s; display: flex; flex-direction: column; text-decoration: none; color: inherit; }
         .app-card:hover { transform: translateY(-5px); border-color: #00ff41; }
         
         .app-icon { width: 60px; height: 60px; border-radius: 12px; display: flex; align-items: center; justify-content: center; margin-bottom: 20px; font-size: 28px; }
         .icon-social { background: rgba(29, 155, 240, 0.1); color: #1d9bf0; }
+        .icon-messenger { background: rgba(153, 51, 255, 0.1); color: #9933ff; } /* 🚀 WARNA BARU UNTUK MESSENGER */
         .icon-uns { background: rgba(0, 255, 65, 0.1); color: #00ff41; }
         .icon-wallet { background: rgba(255, 212, 0, 0.1); color: #ffd400; }
         
@@ -78,6 +79,7 @@ $userAvatar = $_SESSION['ava_cache'][$userPk] !== null
         
         .app-launch { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; transition: 0.2s; }
         .app-card:hover .app-launch.social { color: #1d9bf0; }
+        .app-card:hover .app-launch.messenger { color: #9933ff; } /* 🚀 HOVER MESSENGER */
         .app-card:hover .app-launch.uns { color: #00ff41; }
         .app-card:hover .app-launch.wallet { color: #ffd400; }
     </style>
@@ -111,21 +113,28 @@ $userAvatar = $_SESSION['ava_cache'][$userPk] !== null
         <a href="social/index.php" class="app-card">
             <div class="app-icon icon-social">💬</div>
             <div class="app-title">Utopia Social</div>
-            <div class="app-desc">Tenggelam dalam linimasa komunitas. Ngobrol di channel, bagikan momen, dan kirim pesan instan terenkripsi (DM).</div>
+            <div class="app-desc">Tenggelam dalam linimasa komunitas. Ngobrol di channel dan bagikan momen penting Anda.</div>
             <div class="app-launch social">Launch Social &rarr;</div>
+        </a>
+
+        <a href="messenger/index.php" class="app-card">
+            <div class="app-icon icon-messenger">🛡️</div>
+            <div class="app-title">uChat Premium</div>
+            <div class="app-desc">Layanan pesan instan P2P terenkripsi. Ngobrol rahasia, kirim file, dan getarkan layar teman dengan BUZZ!</div>
+            <div class="app-launch messenger">Launch uChat &rarr;</div>
         </a>
 
         <a href="uns/index.php" class="app-card">
             <div class="app-icon icon-uns">🌐</div>
             <div class="app-title">uNS Manager</div>
-            <div class="app-desc">Pusat kontrol domain Web3 Utopia. Cari identitas uNS, daftarkan nama baru, atau lakukan transfer hak milik dengan aman.</div>
+            <div class="app-desc">Pusat kontrol domain Web3 Utopia. Daftarkan nama baru atau atur gelar utama (Primary uNS) Anda.</div>
             <div class="app-launch uns">Launch uNS &rarr;</div>
         </a>
 
         <a href="wallet/index.php" class="app-card">
             <div class="app-icon icon-wallet">💳</div>
             <div class="app-title">Utopia Finance</div>
-            <div class="app-desc">Kelola aset kripto Anda. Cek saldo Crypton (CRP) & UUSD, buat Voucher, dan kirim dana ke kontak tanpa jejak.</div>
+            <div class="app-desc">Kelola aset kripto Anda. Cek saldo Crypton (CRP), buat Voucher, dan kirim dana secara anonim.</div>
             <div class="app-launch wallet">Launch Wallet &rarr;</div>
         </a>
 

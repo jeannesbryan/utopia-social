@@ -1,18 +1,19 @@
 <?php
-session_start();
-if (!isset($_SESSION['token'])) { header('Location: index.php'); exit; }
-define('UTOPIA_API_URL', 'http://127.0.0.1:20000/api/1.0');
-define('CHANNEL_ID', '2F5F675D31CA664E102AFDF061516AE3');
+// 🚀 INTEGRASI LANGSUNG DENGAN CONFIG UTAMA
+require_once '../config.php';
+
+if (!isset($_SESSION['token'])) { 
+    header('Location: ../index.php'); 
+    exit; 
+}
+
+// 🚀 CEK KONFIGURASI TIMELINE AGAR TIDAK BENTROK
+if (!defined('CHANNEL_ID')) {
+    define('CHANNEL_ID', '2F5F675D31CA664E102AFDF061516AE3'); 
+}
 
 $targetPk = $_GET['pk'] ?? '';
 if(empty($targetPk)) { header('Location: index.php'); exit; }
-
-function callUtopiaAPI($method, $params = []) {
-    $data = ['method' => $method, 'token' => $_SESSION['token'], 'params' => $params];
-    $ch = curl_init(UTOPIA_API_URL); curl_setopt_array($ch, [CURLOPT_POST=>true, CURLOPT_POSTFIELDS=>json_encode($data), CURLOPT_RETURNTRANSFER=>true, CURLOPT_HTTPHEADER=>['Content-Type: application/json'], CURLOPT_TIMEOUT=>10]);
-    $res = curl_exec($ch); curl_close($ch);
-    return json_decode($res, true, 512, JSON_BIGINT_AS_STRING) ?: ['error' => 'Invalid JSON'];
-}
 
 // Wajib cari Hashed PK (32-char)
 $tHashedPk = (strlen($targetPk) === 32) ? $targetPk : '';
@@ -25,42 +26,80 @@ if (empty($tHashedPk)) {
     }
 }
 
+// ==========================================
+// 🚀 BACKEND AJAX API HANDLER
+// ==========================================
 if (isset($_GET['ajax'])) {
     header('Content-Type: application/json');
+    
     if ($_GET['ajax'] === 'send' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $msg = trim($_POST['message']); if (empty($msg)) exit;
         if (empty($tHashedPk)) { echo json_encode(['success'=>false, 'error'=>'ID user tidak ditemukan di channel ini.']); exit; }
-        $res = callUtopiaAPI('sendChannelPrivateMessageToContact', ['channelid' => CHANNEL_ID, 'contactHashedPk' => $tHashedPk, 'message' => $msg]);
+        
+        $res = callUtopiaAPI('sendChannelPrivateMessageToContact', [
+            'channelid' => CHANNEL_ID, 
+            'contactHashedPk' => $tHashedPk, 
+            'message' => $msg
+        ]);
         echo json_encode(['success' => (isset($res['result']) && $res['result'] != "0")]); exit;
     }
+    
     if ($_GET['ajax'] === 'history') {
         $history = [];
         if (!empty($tHashedPk)) {
-            $r = callUtopiaAPI('getChannelPrivateMessagesOfContact', ['channelid' => CHANNEL_ID, 'contactHashedPk' => $tHashedPk]);
+            $r = callUtopiaAPI('getChannelPrivateMessagesOfContact', [
+                'channelid' => CHANNEL_ID, 
+                'contactHashedPk' => $tHashedPk
+            ]);
             if (isset($r['result']) && is_array($r['result'])) $history = $r['result'];
         }
+        
         usort($history, function($a, $b) { return strtotime($a['dateTime']??0) - strtotime($b['dateTime']??0); });
-        $cInfo = callUtopiaAPI('getOwnContact');
-        echo json_encode(['messages' => $history, 'myHashedPk' => $cInfo['result']['hashedPk'] ?? '']); exit;
+        
+        // Tarik Hashed PK Sendiri dari Session (sudah di-cache di config atau me.php)
+        if (!isset($_SESSION['hashed_pk']) || empty($_SESSION['hashed_pk'])) {
+            $cInfo = callUtopiaAPI('getOwnContact');
+            if(isset($cInfo['result'])) $_SESSION['hashed_pk'] = $cInfo['result']['hashedPk'] ?? '';
+        }
+        
+        echo json_encode([
+            'messages' => $history, 
+            'myHashedPk' => $_SESSION['hashed_pk'] ?? ''
+        ]); exit;
     }
+    exit;
 }
 ?>
-<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0"><title>Channel PM</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box} body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#000;color:#e7e9ea;height:100vh;display:flex;justify-content:center}
-.container{width:100%;max-width:600px;display:flex;flex-direction:column;border-left:1px solid #2f3336;border-right:1px solid #2f3336;height:100%}
-.header{background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid #2f3336;padding:16px;display:flex;align-items:center;gap:16px}
-.back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#e7e9ea;font-size:20px;cursor:pointer;border-radius:50%} .back-btn:hover{background:rgba(255,255,255,0.1)}
-.header-name{font-size:18px;font-weight:700} .header-status{color:#00ff41;font-size:12px;font-weight:400}
-.chat-box{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
-.chat-bubble{max-width:85%;padding:10px 16px;border-radius:18px;font-size:15px;word-wrap:break-word;white-space:pre-wrap;}
-.chat-left{align-self:flex-start;background:#26292c;color:#e7e9ea;border-bottom-left-radius:4px}
-.chat-right{align-self:flex-end;background:#00ff41;color:#000;border-bottom-right-radius:4px}
-.composer{border-top:1px solid #2f3336;padding:16px;display:flex;gap:12px;background:#000}
-.composer input{flex:1;padding:12px 18px;background:#16181c;border:1px solid #2f3336;border-radius:24px;color:#e7e9ea;font-size:15px;outline:none} .composer input:focus{border-color:#00ff41}
-.btn-send{padding:0 20px;background:#00ff41;color:#000;border:none;border-radius:24px;font-weight:700;cursor:pointer}
-</style>
-</head><body>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Channel PM - Utopia Social</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%231d9bf0'/%3E%3Ctext x='50' y='50' font-size='45' font-weight='bold' fill='%23ffffff' text-anchor='middle' dominant-baseline='central' font-family='Arial, sans-serif'%3EU%3C/text%3E%3C/svg%3E">
+    <style>
+        *{margin:0;padding:0;box-sizing:border-box} 
+        body{font-family:-apple-system,BlinkMacSystemFont,sans-serif;background:#000;color:#e7e9ea;height:100vh;display:flex;justify-content:center}
+        .container{width:100%;max-width:600px;display:flex;flex-direction:column;border-left:1px solid #2f3336;border-right:1px solid #2f3336;height:100%}
+        
+        .header{background:rgba(0,0,0,0.85);backdrop-filter:blur(12px);border-bottom:1px solid #2f3336;padding:16px;display:flex;align-items:center;gap:16px}
+        .back-btn{width:36px;height:36px;display:flex;align-items:center;justify-content:center;background:transparent;border:none;color:#e7e9ea;font-size:20px;cursor:pointer;border-radius:50%} .back-btn:hover{background:rgba(255,255,255,0.1)}
+        .header-name{font-size:18px;font-weight:700} .header-status{color:#1d9bf0;font-size:12px;font-weight:400}
+        
+        .chat-box{flex:1;overflow-y:auto;padding:16px;display:flex;flex-direction:column;gap:12px;}
+        .chat-bubble{max-width:85%;padding:10px 16px;border-radius:18px;font-size:15px;word-wrap:break-word;white-space:pre-wrap;}
+        .chat-left{align-self:flex-start;background:#2f3336;color:#e7e9ea;border-bottom-left-radius:4px}
+        .chat-right{align-self:flex-end;background:#1d9bf0;color:#fff;border-bottom-right-radius:4px}
+        
+        .composer{border-top:1px solid #2f3336;padding:16px;display:flex;gap:12px;background:#000}
+        .composer input{flex:1;padding:12px 18px;background:#16181c;border:1px solid #2f3336;border-radius:24px;color:#e7e9ea;font-size:15px;outline:none} .composer input:focus{border-color:#1d9bf0}
+        .btn-send{padding:0 20px;background:#1d9bf0;color:#fff;border:none;border-radius:24px;font-weight:700;cursor:pointer} .btn-send:hover{background:#1a8cd8;} .btn-send:disabled{opacity:0.5;cursor:not-allowed;}
+        
+        ::-webkit-scrollbar { width: 6px; }
+        ::-webkit-scrollbar-thumb { background: #2f3336; border-radius: 10px; }
+    </style>
+</head>
+<body>
 <div class="container">
     <div class="header">
         <button class="back-btn" onclick="window.location.href='user.php?pk=<?=urlencode($targetPk)?>'">←</button>
@@ -102,4 +141,5 @@ document.getElementById('sendBtn').addEventListener('click', function(){
 });
 setInterval(loadChat, 4000); loadChat();
 </script>
-</body></html>
+</body>
+</html>

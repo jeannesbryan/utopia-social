@@ -282,30 +282,34 @@ function loadDashboard() {
     fetch('?ajax=history').then(r=>r.json()).then(d => {
         if(d.result && d.result.length > 0) {
             tbody.innerHTML = '';
-            // Ambil 10 transaksi terakhir
+            
+            // 🚀 SMART SORTER V2: Tangkap SEMUA variasi nama tanggal (termasuk 'issued' untuk uNS)
+            d.result.sort((a, b) => {
+                let dateA = a.created || a.dateTime || a.date || a.timestamp || a.issued || 0;
+                let dateB = b.created || b.dateTime || b.date || b.timestamp || b.issued || 0;
+                return new Date(dateB) - new Date(dateA); 
+            });
+
+            // Ambil 10 transaksi teratas
             let txs = d.result.slice(0, 10);
             
             txs.forEach(tx => {
-                // SMART DATE: Tangkap dari variabel 'created' atau 'dateTime'
-                let rawDate = tx.created || tx.dateTime || tx.date || tx.timestamp;
-                let displayDate = rawDate ? new Date(rawDate).toLocaleString() : 'Unknown Date';
+                // SMART DATE V2
+                let rawDate = tx.created || tx.dateTime || tx.date || tx.timestamp || tx.issued;
+                let displayDate = rawDate ? new Date(rawDate).toLocaleString('id-ID') : 'Unknown Date';
 
-                // TIPE TRANSAKSI & ARAH: 1 = Masuk, 2 = Keluar
-                let isOut = (tx.direction === 2 || tx.amount < 0);
+                // TIPE TRANSAKSI & ARAH
+                // Tambahan deteksi minus untuk fee sistem
+                let isOut = (tx.direction === 2 || tx.amount < 0 || String(tx.type).toLowerCase().includes('fee'));
                 let colorClass = isOut ? 'tx-out' : 'tx-in';
                 let sign = isOut ? '-' : '+';
                 
-                // Gunakan teks asli dari Utopia (contoh: "Interest reward") jika ada
-                let typeText = tx.type || (isOut ? 'Sent' : 'Received');
-                
-                // Pastikan amount-nya absolut
+                let typeText = tx.type || tx.action || (isOut ? 'Sent' : 'Received');
                 let absAmount = Math.abs(tx.amount || 0);
 
-                // SMART STATUS: State 0 itu ternyata SUKSES! 
+                // SMART STATUS
                 let statusText = 'Completed'; 
-                
                 if (tx.state !== undefined) {
-                    // Hanya state 1 yang Pending, dan state 4 yang Failed
                     if (tx.state === 1 || String(tx.state).toLowerCase() === 'pending') statusText = 'Pending';
                     else if (tx.state === 4 || String(tx.state).toLowerCase() === 'failed') statusText = 'Failed';
                 }

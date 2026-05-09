@@ -25,11 +25,28 @@ if (isset($_GET['ajax'])) {
         $res = callUtopiaAPI('unsCreateRecordRequest', $params);
         echo json_encode($res); exit;
     }
+
+    // 🚀 ENDPOINT BARU: Modifikasi status Primary pakai unsModifyRecordRequest
+    if ($_GET['ajax'] === 'set_primary' && $_SERVER['REQUEST_METHOD'] === 'POST') {
+        $nick = trim($_POST['name'] ?? '');
+        $isPrimary = (isset($_POST['isPrimary']) && $_POST['isPrimary'] === 'true');
+        
+        // Memakai unsModifyRecordRequest sesuai API Docs
+        $res = callUtopiaAPI('unsModifyRecordRequest', ['nick' => $nick, 'isPrimary' => $isPrimary]);
+        
+        // Sinkronisasi session PHP jika sukses
+        if (isset($res['result'])) {
+            if ($isPrimary) {
+                $_SESSION['uns'] = $nick;
+            } else if (strtolower($_SESSION['uns'] ?? '') === strtolower($nick)) {
+                $_SESSION['uns'] = '';
+            }
+        }
+        echo json_encode($res); exit;
+    }
     
-    // 🚀 SMART SEARCH BACKEND: Otomatis deteksi uNS Name atau 64-char PK!
     if ($_GET['ajax'] === 'search' && $_SERVER['REQUEST_METHOD'] === 'POST') {
         $query = trim($_POST['query'] ?? '');
-        // Cek apakah query adalah 64 karakter hexadecimal (Public Key)
         if (strlen($query) === 64 && ctype_xdigit($query)) {
             $res = callUtopiaAPI('unsSearchByPk', ['filter' => $query]);
         } else {
@@ -100,6 +117,14 @@ if (isset($_GET['ajax'])) {
         .checkbox-container label { margin-bottom: 0; cursor: pointer; font-size: 15px; color: #e7e9ea; }
         
         .domain-badge { display: inline-block; background: rgba(0,255,65,0.1); border: 1px solid #00ff41; color: #00ff41; padding: 4px 10px; border-radius: 12px; margin: 4px 6px 4px 0; font-size: 12px; font-weight: 600; letter-spacing: 0.5px; }
+
+        .switch { position: relative; display: inline-block; width: 44px; height: 24px; vertical-align: middle; }
+        .switch input { opacity: 0; width: 0; height: 0; }
+        .slider { position: absolute; cursor: pointer; top: 0; left: 0; right: 0; bottom: 0; background-color: #2f3336; transition: .3s; border-radius: 24px; }
+        .slider:before { position: absolute; content: ""; height: 16px; width: 16px; left: 4px; bottom: 4px; background-color: #e7e9ea; transition: .3s; border-radius: 50%; }
+        input:checked + .slider { background-color: #00ff41; }
+        input:checked + .slider:before { transform: translateX(20px); background-color: #000; }
+        input:disabled + .slider { opacity: 0.5; cursor: not-allowed; }
     </style>
 </head>
 <body>
@@ -126,11 +151,19 @@ if (isset($_GET['ajax'])) {
     <div class="content-area">
         <div id="tab-my_domains" class="tab-content active">
             <h2 class="section-title">My Web3 Domains</h2>
-            <div class="section-desc">Daftar identitas uNS yang terdaftar di Public Key Anda.</div>
+            <div class="section-desc">Daftar portofolio uNS yang Anda miliki. Tentukan nama utama untuk profil Anda!</div>
+            <div id="myUnsAlert" class="alert-box"></div>
             <button class="btn" onclick="loadMyUns()" style="padding: 8px 16px; font-size: 13px;">🔄 Refresh List</button>
             <table id="myUnsTable">
-                <thead><tr><th>uNS Name</th><th>Registered Date</th><th>Status</th></tr></thead>
-                <tbody id="myUnsBody"><tr><td colspan="3" class="empty-state">Memuat data domain Anda...</td></tr></tbody>
+                <thead>
+                    <tr>
+                        <th>uNS Name</th>
+                        <th>Registered Date</th>
+                        <th>Status</th>
+                        <th>Primary</th>
+                    </tr>
+                </thead>
+                <tbody id="myUnsBody"><tr><td colspan="4" class="empty-state">Memuat data domain Anda...</td></tr></tbody>
             </table>
         </div>
 
@@ -193,8 +226,8 @@ function openTab(tabId) {
 }
 
 function showAlert(id, type, msg) {
-    let el = document.getElementById(id); el.style.display = 'block'; el.className = 'alert-box alert-' + type; el.textContent = msg;
-    setTimeout(() => el.style.display = 'none', 5000);
+    let el = document.getElementById(id); el.style.display = 'block'; el.className = 'alert-box alert-' + type; el.innerHTML = msg;
+    setTimeout(() => el.style.display = 'none', 6000);
 }
 
 async function getRegDate(name) {
@@ -221,17 +254,36 @@ async function getRegDate(name) {
 
 async function loadMyUns() {
     let tbody = document.getElementById('myUnsBody');
-    tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Loading domains and history...</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Loading domains and history...</td></tr>';
+    
     fetch('?ajax=my_uns').then(r=>r.json()).then(async d => {
         if(d.result && d.result.length > 0) {
             tbody.innerHTML = '';
             for (let r of d.result) {
                 let rawName = r.name || r.nick || (typeof r === 'string' ? r : 'Unknown');
                 let upperName = rawName.toUpperCase(); 
-                let isPrimary = (rawName === '<?=htmlspecialchars($_SESSION['uns'] ?? '')?>') ? ' <small style="color:#71767b;">(PRIMARY)</small>' : '';
+                
+                // 🚀 BACA LANGSUNG DARI API UTOPIA (Kebenaran Mutlak)
+                let isPrimaryFlag = (r.isPrimary === true || r.isPrimary === "true");
+                
+                let badgeStyle = isPrimaryFlag ? 'inline' : 'none';
+                let isPrimaryHtml = ` <small class="primary-badge" style="color:#71767b; display:${badgeStyle};">(PRIMARY)</small>`;
+                
+                let isChecked = isPrimaryFlag ? 'checked' : '';
+                let toggleHtml = `
+                    <label class="switch" title="Set On/Off as Primary">
+                        <input type="checkbox" onchange="togglePrimary(this, '${rawName}')" ${isChecked}>
+                        <span class="slider"></span>
+                    </label>
+                `;
                 
                 let rowId = 'row-' + rawName.replace(/[^a-z0-9]/gi, '-');
-                tbody.innerHTML += `<tr id="${rowId}"><td class="highlight" style="letter-spacing:1px; font-size:16px;">${upperName}${isPrimary}</td><td class="reg-date">...</td><td><span style="color:#00ff41; font-weight:600;">Registered</span></td></tr>`;
+                tbody.innerHTML += `<tr id="${rowId}">
+                    <td class="highlight" style="letter-spacing:1px; font-size:16px;">${upperName}${isPrimaryHtml}</td>
+                    <td class="reg-date">...</td>
+                    <td><span style="color:#00ff41; font-weight:600;">Registered</span></td>
+                    <td>${toggleHtml}</td>
+                </tr>`;
                 
                 getRegDate(rawName).then(date => {
                     let row = document.getElementById(rowId);
@@ -239,8 +291,45 @@ async function loadMyUns() {
                 });
             }
         } else {
-            tbody.innerHTML = '<tr><td colspan="3" class="empty-state">Anda belum memiliki uNS.</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="4" class="empty-state">Anda belum memiliki uNS.</td></tr>';
         }
+    });
+}
+
+function togglePrimary(checkbox, name) {
+    let isPrimary = checkbox.checked;
+    checkbox.disabled = true; 
+    
+    let fd = new FormData();
+    fd.append('name', name);
+    fd.append('isPrimary', isPrimary ? 'true' : 'false');
+    
+    fetch('?ajax=set_primary', {method: 'POST', body: fd})
+    .then(r => r.json())
+    .then(d => {
+        if(d.result) {
+            showAlert('myUnsAlert', 'success', `Request perubahan berhasil dikirim ke blockchain!`);
+            
+            if (isPrimary) {
+                document.querySelectorAll('.switch input[type="checkbox"]').forEach(cb => {
+                    if (cb !== checkbox) cb.checked = false;
+                });
+                document.querySelectorAll('.primary-badge').forEach(b => b.style.display = 'none');
+                let badge = checkbox.closest('tr').querySelector('.primary-badge');
+                if(badge) badge.style.display = 'inline';
+            } else {
+                let badge = checkbox.closest('tr').querySelector('.primary-badge');
+                if(badge) badge.style.display = 'none';
+            }
+        } else {
+            showAlert('myUnsAlert', 'error', 'Gagal update status! Pastikan saldo CRP Anda mencukupi.');
+            checkbox.checked = !isPrimary;
+        }
+        checkbox.disabled = false;
+    }).catch(() => {
+        showAlert('myUnsAlert', 'error', 'Network Error! Gagal menghubungi Node.');
+        checkbox.checked = !isPrimary; 
+        checkbox.disabled = false;
     });
 }
 
@@ -278,8 +367,6 @@ function searchUns() {
     
     fetch('?ajax=search', {method:'POST', body:fd}).then(r=>r.json()).then(async d => {
         if(d.result && d.result.length > 0) {
-            // Karena API mereturn daftar nama kalau kita cari pakai PK, 
-            // kita ambil hasil pertama sebagai "Main Domain"
             let r = d.result[0]; let rawName = r.name || r.nick;
             let date = await getRegDate(rawName);
             
@@ -321,7 +408,6 @@ function searchUns() {
                 }
             });
         } else { 
-            // 🚀 SMART EMPTY MESSAGE
             let emptyMsg = query.length === 64 ? 'PK ini belum memiliki uNS yang terdaftar!' : 'Nama tersedia dan siap didaftarkan!';
             resBox.innerHTML = `<div class="alert-box alert-success" style="display:block">${emptyMsg}</div>`; 
         }
