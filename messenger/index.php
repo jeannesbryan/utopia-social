@@ -7,7 +7,7 @@ if (!isset($_SESSION['token'])) {
 }
 
 // ==========================================
-// 🚀 BACKEND AJAX API HANDLER (MESSENGER FINAL)
+// 🚀 BACKEND AJAX API HANDLER (MESSENGER STABLE)
 // ==========================================
 if (isset($_GET['ajax'])) {
     header('Content-Type: application/json');
@@ -68,7 +68,7 @@ if (isset($_GET['ajax'])) {
             $sendRes = callUtopiaAPI('sendFileByMessage', ['to' => $to, 'fileId' => (string)$fileId]);
             echo json_encode($sendRes); exit;
         } else {
-            echo json_encode(['error' => 'Gagal menitipkan file.']); exit;
+            echo json_encode(['error' => 'Failed to upload file.']); exit;
         }
     }
 }
@@ -78,13 +78,13 @@ if (isset($_GET['ajax'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>uChat - Private Messenger Premium</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2300ff41'/%3E%3Ctext x='50' y='50' font-size='45' font-weight='bold' fill='%23000000' text-anchor='middle' dominant-baseline='central' font-family='Arial, sans-serif'%3EU%3C/text%3E%3C/svg%3E">
+    <title>Wetopia Messenger</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%239933ff'/%3E%3Ctext x='50' y='50' font-size='45' font-weight='bold' fill='%23ffffff' text-anchor='middle' dominant-baseline='central' font-family='Arial, sans-serif'%3EW%3C/text%3E%3C/svg%3E">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; background: #000; color: #e7e9ea; height: 100vh; display: flex; flex-direction: column; overflow: hidden; }
         .header { background: rgba(0,0,0,0.85); backdrop-filter: blur(12px); border-bottom: 1px solid #2f3336; padding: 12px 30px; display: flex; justify-content: space-between; align-items: center; z-index: 100; flex-shrink: 0; }
-        .header-logo { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 800; }
+        .header-logo { display: flex; align-items: center; gap: 12px; font-size: 20px; font-weight: 800; color: #fff;}
         .header-logo svg { width: 32px; height: 32px; }
         .btn-back { padding: 8px 16px; background: transparent; color: #e7e9ea; border: 1px solid #2f3336; border-radius: 20px; text-decoration: none; font-size: 14px; font-weight: 700; transition: 0.2s; }
         .btn-back:hover { background: rgba(255,255,255,0.1); }
@@ -95,8 +95,8 @@ if (isset($_GET['ajax'])) {
         .sidebar-header { padding: 16px; font-weight: 800; font-size: 18px; border-bottom: 1px solid #2f3336; background: #000; }
         .contact-list { flex: 1; overflow-y: auto; }
         .contact-item { padding: 12px 16px; border-bottom: 1px solid #2f3336; cursor: pointer; transition: 0.2s; display: flex; align-items: center; gap: 12px; }
-        .contact-item:hover { background: rgba(0, 255, 65, 0.05); }
-        .contact-item.active { background: rgba(0, 255, 65, 0.1); border-left: 4px solid #00ff41; }
+        .contact-item:hover { background: rgba(153, 51, 255, 0.05); }
+        .contact-item.active { background: rgba(153, 51, 255, 0.1); border-left: 4px solid #9933ff; }
         
         .avatar { width: 48px; height: 48px; border-radius: 50%; background: #2f3336; overflow: hidden; flex-shrink: 0; border: 2px solid #2f3336; }
         .avatar img { width: 100%; height: 100%; object-fit: cover; }
@@ -121,30 +121,32 @@ if (isset($_GET['ajax'])) {
         .msg-row.received { justify-content: flex-start; }
         
         .bubble { position: relative; max-width: 80%; padding: 10px 14px; border-radius: 16px; font-size: 14.5px; line-height: 1.4; word-break: break-word;}
-        .msg-row.sent .bubble { background: #00ff41; color: #000; border-bottom-right-radius: 4px; }
+        .msg-row.sent .bubble { background: #9933ff; color: #fff; border-bottom-right-radius: 4px; }
         .msg-row.received .bubble { background: #2f3336; color: #e7e9ea; border-bottom-left-radius: 4px; }
         
-        .raw-dump { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; margin-top: 5px; border: 1px solid rgba(255,255,255,0.1); color: #00ff41; }
+        .raw-dump { background: rgba(0,0,0,0.5); padding: 10px; border-radius: 8px; font-family: 'Courier New', monospace; font-size: 11px; white-space: pre-wrap; margin-top: 5px; border: 1px solid rgba(255,255,255,0.1); color: #9933ff; }
         
         .quote-box { background: rgba(0,0,0,0.25); border-left: 3px solid rgba(255,255,255,0.4); padding: 8px 12px; margin-bottom: 8px; border-radius: 4px; font-size: 13px; opacity: 0.9; }
         .msg-row.sent .quote-box { border-left-color: #000; background: rgba(0,0,0,0.15); }
         .quote-nick { font-weight: bold; margin-bottom: 4px; }
-        .msg-row.sent .quote-nick { color: #000; }
-        .msg-row.received .quote-nick { color: #00ff41; }
+        .msg-row.sent .quote-nick { color: #fff; }
+        .msg-row.received .quote-nick { color: #9933ff; }
         .quote-text { font-style: italic; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
 
         .msg-actions { display: none; cursor: pointer; font-size: 12px; margin-top: 6px; font-weight: bold; opacity: 0.7; }
         .bubble:hover .msg-actions { display: block; }
 
         .reply-banner { display: none; background: #2f3336; padding: 10px 20px; border-top: 1px solid #000; border-bottom: 1px solid #000; align-items: center; justify-content: space-between; font-size: 13px; }
-        .reply-text-snippet { color: #e7e9ea; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; border-left: 3px solid #00ff41; padding-left: 8px; }
+        .reply-text-snippet { color: #e7e9ea; font-style: italic; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 90%; border-left: 3px solid #9933ff; padding-left: 8px; }
         .btn-cancel-reply { background: transparent; border: none; color: #f4212e; cursor: pointer; font-weight: bold; font-size: 16px; }
 
         .input-area { padding: 16px 20px; background: #16181c; display: flex; gap: 10px; align-items: center; }
         .btn-attach { background: #2f3336; color: #fff; border: none; width: 42px; height: 42px; border-radius: 50%; font-size: 18px; cursor: pointer; display: flex; justify-content: center; align-items: center; transition: 0.2s; }
         .btn-attach:hover { background: #71767b; }
         .input-text { flex: 1; background: #000; border: 1px solid #2f3336; padding: 12px 20px; border-radius: 24px; color: #e7e9ea; outline: none; }
-        .btn-send { background: #00ff41; color: #000; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 800; cursor: pointer; }
+        .input-text:focus { border-color: #9933ff; }
+        .btn-send { background: #9933ff; color: #fff; border: none; padding: 12px 24px; border-radius: 24px; font-weight: 800; cursor: pointer; transition: background 0.2s; }
+        .btn-send:hover { background: #8522e6; }
 
         .empty-chat { flex:1; display:flex; align-items:center; justify-content:center; color:#71767b; flex-direction: column; gap:10px; }
         ::-webkit-scrollbar { width: 6px; }
@@ -155,8 +157,11 @@ if (isset($_GET['ajax'])) {
 
 <div class="header">
     <div class="header-logo">
-        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg"><rect width="100" height="100" rx="20" fill="#00ff41"/><path d="M30 40 L50 60 L70 40" stroke="#000" stroke-width="8" fill="none" stroke-linecap="round"/></svg>
-        uChat Premium
+        <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
+            <rect width="100" height="100" rx="20" fill="#9933ff"/>
+            <path d="M25 35 L40 70 L50 45 L60 70 L75 35" stroke="#fff" stroke-width="8" fill="none" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        Wetopia Messenger
     </div>
     <a href="../dashboard.php" class="btn-back">← Back</a>
 </div>
@@ -167,7 +172,7 @@ if (isset($_GET['ajax'])) {
         <div class="contact-list" id="contactList"></div>
     </div>
     <div class="chat-area" id="chatArea">
-        <div class="empty-chat">Pilih kontak untuk mulai mengobrol.</div>
+        <div class="empty-chat">Select a contact to start chatting.</div>
     </div>
 </div>
 
@@ -246,7 +251,7 @@ async function openChat(pk, nick, ava) {
         <div class="input-area">
             <input type="file" id="attachFile" style="display:none" onchange="uploadAndSendFile(event)">
             <button class="btn-attach" id="btnAttach" onclick="document.getElementById('attachFile').click()" title="Attach File">📎</button>
-            <input type="text" id="chatInput" class="input-text" placeholder="Ketik pesan..." autocomplete="off" onkeypress="if(event.key === 'Enter') sendMessage()">
+            <input type="text" id="chatInput" class="input-text" placeholder="Type a message..." autocomplete="off" onkeypress="if(event.key === 'Enter') sendMessage()">
             <button class="btn-send" onclick="sendMessage()">Send</button>
         </div>`;
     
@@ -267,24 +272,19 @@ function cancelReply() {
     document.getElementById('replyBanner').style.display = 'none';
 }
 
-// 🚀 FITUR CLEAR CHAT + TENDANG DARI SIDEBAR
 async function clearChat() {
     if(!activePk) return;
-    if(!confirm("⚠️ PERINGATAN: Yakin ingin menghapus seluruh riwayat chat & menutup obrolan ini?")) return;
+    if(!confirm("⚠️ WARNING: Are you sure you want to clear the entire chat history and close this chat?")) return;
     
     let fd = new FormData(); fd.append('pk', activePk);
     await fetch('?ajax=clear_chat', {method: 'POST', body: fd});
     
-    // Tendang dari array list sidebar secara visual
     rawContacts = rawContacts.filter(c => c.pk !== activePk);
     delete lastActivity[activePk];
-    
-    // Kosongkan state chat yang aktif
     activePk = '';
     
-    // Render ulang layar
     renderContactList();
-    document.getElementById('chatArea').innerHTML = '<div class="empty-chat">Pilih kontak untuk mulai mengobrol.</div>';
+    document.getElementById('chatArea').innerHTML = '<div class="empty-chat">Select a contact to start chatting.</div>';
 }
 
 async function loadMessages() {
@@ -332,12 +332,12 @@ async function loadMessages() {
                 else if (metaType === 'authcmd') {
                     html += `<div style="display:flex; flex-direction:column; align-items:center; width:100%; margin: 8px 0; gap:4px;">
                         <div style="background: rgba(255,255,255,0.05); color: #71767b; padding: 4px 12px; border-radius: 12px; font-size: 11px;">You have requested an authorization</div>
-                        <div style="background: rgba(0,255,65,0.05); color: #00ff41; padding: 4px 12px; border-radius: 12px; font-size: 10px; border:1px solid rgba(0,255,65,0.1);">The authorization request is approved automatically</div>
+                        <div style="background: rgba(153,51,255,0.05); color: #9933ff; padding: 4px 12px; border-radius: 12px; font-size: 10px; border:1px solid rgba(153,51,255,0.1);">The authorization request is approved automatically</div>
                     </div>`;
                     return; 
                 } 
                 else if (metaType === 'friend') {
-                    html += `<div style="display:flex; justify-content:center; width:100%; margin: 8px 0;"><div style="background: rgba(0,255,65,0.1); color: #00ff41; padding: 4px 12px; border-radius: 12px; font-size: 11px;">🤝 Contact Authorization Updated</div></div>`;
+                    html += `<div style="display:flex; justify-content:center; width:100%; margin: 8px 0;"><div style="background: rgba(153,51,255,0.1); color: #9933ff; padding: 4px 12px; border-radius: 12px; font-size: 11px;">🤝 Contact Authorization Updated</div></div>`;
                     return;
                 }
                 else {
@@ -346,12 +346,11 @@ async function loadMessages() {
                 }
             }
 
-            if (text === "") text = '<em style="color:#71767b; font-size:12px;">[Format pesan tidak terbaca]</em>';
+            if (text === "") text = '<em style="color:#71767b; font-size:12px;">[Unreadable message format]</em>';
 
             let safeSnippetText = (m.metaData && m.metaData.type === 'quote') ? m.metaData.data.text : text;
             let safeText = safeSnippetText.replace(/<[^>]*>?/gm, '').replace(/'/g, "\\'").replace(/"/g, "&quot;");
             
-            // 🚀 TOMBOL REPLY (Tombol Inspect & Delete sudah dihilangkan)
             let replyBtn = `<div class="msg-actions" onclick="prepareReply('${m.id}', '${safeText}')">↩️ Reply</div>`;
             let actionButtons = `<div style="display:flex; gap:10px; justify-content:${isReceived ? 'flex-start' : 'flex-end'};">` + replyBtn + `</div>`;
 
@@ -369,7 +368,7 @@ async function loadMessages() {
         msgBox.innerHTML = html;
         if(isScrolledToBottom) msgBox.scrollTop = msgBox.scrollHeight;
     } else {
-        msgBox.innerHTML = '<div style="text-align:center; color:#71767b; margin-top:20px;">Belum ada pesan. Sapa teman Anda!</div>';
+        msgBox.innerHTML = '<div style="text-align:center; color:#71767b; margin-top:20px;">No messages yet. Say hello to your friend!</div>';
     }
 }
 

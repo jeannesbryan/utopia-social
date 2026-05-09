@@ -1,50 +1,50 @@
 <?php
-// Panggil Jantung API
+// 🚀 Call API Core (Config)
 require_once 'config.php';
 
-// Fitur Logout
+// Logout Feature
 if (isset($_GET['action']) && $_GET['action'] === 'logout') { 
     session_destroy(); 
     header('Location: index.php'); 
     exit; 
 }
 
-// Jika sudah login, langsung usir ke Dashboard
+// If already logged in, redirect to Dashboard
 if (isset($_SESSION['token'])) {
     header('Location: dashboard.php');
     exit;
 }
 
-// Logika Proses Login
+// Login Process Logic
 if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
     $token = trim($_POST['token']); 
     
-    // Cek apakah token valid dengan memanggil status profil
+    // Check if token is valid by calling profile status
     $res = callUtopiaAPI('getProfileStatus', [], $token);
     
     if (isset($res['result'])) {
         $_SESSION['token'] = $token; 
         
-        // Tarik data profil abang untuk disimpan di memory (Session)
+        // Fetch user profile data to store in session
         $contact = callUtopiaAPI('getOwnContact');
         if (isset($contact['result'])) {
             $_SESSION['pk'] = $contact['result']['pk']; 
             $_SESSION['hashed_pk'] = $contact['result']['hashedPk'] ?? '';
             $_SESSION['nick'] = $contact['result']['nick'];
             
-            // Lacak nama uNS abang jika punya
+            // Track uNS name if available
             $uns = callUtopiaAPI('unsSearchByPk', ['filter' => $contact['result']['pk']]);
             $_SESSION['uns'] = $uns['result'][0]['name'] ?? null; 
             
-            // Join channel default di background agar siap dipakai nanti
+            // Join default channel in the background to prepare for later
             callUtopiaAPI('joinChannel', ['ident' => CHANNEL_ID, 'password' => '']);
         }
         
-        // LOGIN SUKSES! Lempar ke Dashboard
+        // LOGIN SUCCESS! Redirect to Dashboard
         header('Location: dashboard.php'); 
         exit;
     } else { 
-        $loginError = 'Invalid API Token. Pastikan klien Utopia sedang berjalan!'; 
+        $loginError = 'Invalid API Token. Please ensure the Utopia client is running!'; 
     }
 }
 ?>
@@ -53,8 +53,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Login - Utopia Web Client</title>
-    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2300ff41'/%3E%3Ctext x='50' y='50' font-size='45' font-weight='bold' fill='%23000000' text-anchor='middle' dominant-baseline='central' font-family='Arial, sans-serif'%3EU%3C/text%3E%3C/svg%3E">
+    <title>Login - Wetopia Super App</title>
+    <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' fill='%2300ff41'/%3E%3Ctext x='50' y='50' font-size='45' font-weight='bold' fill='%23000000' text-anchor='middle' dominant-baseline='central' font-family='Arial, sans-serif'%3EW%3C/text%3E%3C/svg%3E">
     <style>
         * { margin: 0; padding: 0; box-sizing: border-box; }
         body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; background: #000; color: #e7e9ea; height: 100vh; display: flex; align-items: center; justify-content: center; }
@@ -88,12 +88,12 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['login'])) {
         <div class="login-logo">
             <svg viewBox="0 0 100 100" xmlns="http://www.w3.org/2000/svg">
                 <rect width="100" height="100" rx="20" fill="#00ff41"/>
-                <text x="50" y="50" font-size="45" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central" font-family="Arial">U</text>
+                <text x="50" y="50" font-size="45" font-weight="bold" fill="#000" text-anchor="middle" dominant-baseline="central" font-family="Arial">W</text>
             </svg>
         </div>
         
-        <h1 class="login-title">Utopia Web</h1>
-        <div class="login-subtitle">Decentralized Super App Client</div>
+        <h1 class="login-title">Wetopia</h1>
+        <div class="login-subtitle">Decentralized Web3 Super App</div>
         
         <?php if (isset($loginError)): ?>
             <div class="error-box"><?=htmlspecialchars($loginError)?></div>
